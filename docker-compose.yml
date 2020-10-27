@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+    db-mysql:
+        container_name: db-mysql
+        image: mysql
+        hostname: db-mysql
+        networks: 
+            - atm-web-network
+        environment:
+            - MYSQL_ROOT_PASSWORD=reallystrongpassword123
+        ports:
+            - 3305:3306
+        cap_add:
+            - SYS_NICE
+        volumes: 
+            - web_db:/var/lib/mysql
+
+    bankaccount-api:
+        container_name: bankaccount-api
+        networks: 
+            - atm-web-network
+        restart: on-failure
+        build:
+            context: ./bankaccount-api
+            dockerfile: Dockerfile
+        depends_on:
+            - db-mysql
+        ports:
+            - 8091:8091
+    
+    atm-web:
+        container_name: atm-web
+        networks: 
+            - atm-web-network
+        restart: on-failure
+        build:
+            context: ./atm-web
+            dockerfile: Dockerfile
+        ports:
+            - 8090:8090
+        depends_on:
+            - db-mysql
+            - bankaccount-api
+
+networks:
+    atm-web-network:
+        driver: bridge
+
+volumes:
+    web_db:
